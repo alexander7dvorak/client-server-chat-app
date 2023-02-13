@@ -13,6 +13,9 @@ repositories {
 }
 
 dependencies {
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-amqp', version: '3.0.2'
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-reactor-netty', version: '3.0.2'
+
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
