@@ -24,4 +24,12 @@ public class ChatController {
         return chatMessage;
     }
 
+    @MessageMapping("/chat/change")
+    @SendTo("/topic/public")
+    public ChatMessage changeName(@Payload ChatMessage chatMessage,
+                                  SimpMessageHeaderAccessor headerAccessor) {
+        headerAccessor.getSessionAttributes().put("username", chatMessage.getSender());
+        return chatMessage;
+
+    }
 }

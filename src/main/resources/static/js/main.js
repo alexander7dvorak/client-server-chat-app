@@ -7,9 +7,11 @@ var messageForm = document.querySelector('#messageForm');
 var messageInput = document.querySelector('#message');
 var messageArea = document.querySelector('#messageArea');
 var connectingElement = document.querySelector('.connecting');
+var usernameSubmitButton = document.querySelector('.username-submit');
 
 var stompClient = null;
 var username = null;
+var oldName = null;
 
 var colors = [
     '#2196F3', '#32c787', '#00BCD4', '#ff5652',
@@ -20,8 +22,9 @@ function connect(event) {
     username = document.querySelector('#name').value.trim();
 
     if (username) {
-        usernamePage.classList.add('hidden');
+        usernamePage.style.right = '10px';
         chatPage.classList.remove('hidden');
+        usernameSubmitButton.innerHTML = "Reset username";
 
         var socket = new SockJS('/ws');
         stompClient = Stomp.over(socket);
@@ -33,15 +36,18 @@ function connect(event) {
 
 
 function onConnected() {
-    // Subscribe to the Public Topic
-    stompClient.subscribe('/topic/public', onMessageReceived);
-
-    // Tell your username to the server
-    stompClient.send("/app/chat/add",
-        {},
-        JSON.stringify({sender: username, type: 'JOIN'})
-    )
-
+    if (oldName) {
+        stompClient.send("/app/chat/change",
+            {},
+            JSON.stringify({sender: username, type: 'NAME_CHANGE'})
+        )
+    } else {
+        stompClient.subscribe('/topic/public', onMessageReceived);
+        stompClient.send("/app/chat/add",
+            {},
+            JSON.stringify({sender: username, type: 'JOIN'})
+        )
+    }
     connectingElement.classList.add('hidden');
 }
 
@@ -50,7 +56,6 @@ function onError(error) {
     connectingElement.textContent = 'Could not connect to WebSocket server. Please refresh this page to try again!';
     connectingElement.style.color = 'red';
 }
-
 
 function sendMessage(event) {
     var messageContent = messageInput.value.trim();
@@ -66,7 +71,6 @@ function sendMessage(event) {
     event.preventDefault();
 }
 
-
 function onMessageReceived(payload) {
     var message = JSON.parse(payload.body);
 
@@ -78,6 +82,9 @@ function onMessageReceived(payload) {
     } else if (message.type === 'LEAVE') {
         messageElement.classList.add('event-message');
         message.content = message.sender + ' left!';
+    } else if (message.type === 'NAME_CHANGE') {
+        messageElement.classList.add('event-message');
+        message.content = message.sender + ' changed username from ' + oldName;
     } else {
         messageElement.classList.add('chat-message');
 
@@ -102,8 +109,8 @@ function onMessageReceived(payload) {
 
     messageArea.appendChild(messageElement);
     messageArea.scrollTop = messageArea.scrollHeight;
+    oldName = username;
 }
-
 
 function getAvatarColor(messageSender) {
     var hash = 0;
